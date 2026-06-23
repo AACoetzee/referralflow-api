@@ -1,6 +1,7 @@
 const express = require("express");
 
 const app = express();
+const checkReferral = require("./referralChecker");
 
 app.use(express.json());
 
@@ -12,7 +13,7 @@ app.get("/", (req, res) => {
   });
 });
 
-// make endpoint referrals
+// make endpoint referrals and check insurance
 
 app.post("/referrals", (req, res) => {
   const referral = {
@@ -22,9 +23,16 @@ app.post("/referrals", (req, res) => {
     insurance: req.body.insurance,
     serviceRequested: req.body.serviceRequested,
     diagnosisCode: req.body.diagnosisCode,
-    documents: req.body.documents || [],
-    status: "new"
+    documents: req.body.documents || []
   };
+
+  const checkResult = checkReferral(referral);
+
+  referral.status = checkResult.status;
+  referral.missingDocuments = checkResult.missingDocuments;
+  referral.priorAuthRequired = checkResult.priorAuthRequired;
+  referral.queue = checkResult.queue;
+  referral.message = checkResult.message;
 
   referrals.push(referral);
 
@@ -49,9 +57,8 @@ app.get("/referrals/:id", (req, res) => {
   res.json(referral);
 });
 
-//endpoint for one referral
-
-app.get("/referrals/:id", (req, res) => {
+//update referral when missing documents are added
+app.patch("/referrals/:id/documents", (req, res) => {
   const referral = referrals.find(item => item.id === req.params.id);
 
   if (!referral) {
@@ -60,9 +67,36 @@ app.get("/referrals/:id", (req, res) => {
     });
   }
 
+  const newDocuments = req.body.documents || [];
+
+  referral.documents = [...new Set([...referral.documents, ...newDocuments])];
+
+  const checkResult = checkReferral(referral);
+
+  referral.status = checkResult.status;
+  referral.missingDocuments = checkResult.missingDocuments;
+  referral.priorAuthRequired = checkResult.priorAuthRequired;
+  referral.queue = checkResult.queue;
+  referral.message = checkResult.message;
+
   res.json(referral);
 });
 
+// queue endpoint returns all referrals in that queue.
+
+app.get("/queues/:queueName", (req, res) => {
+  const queueName = req.params.queueName;
+
+  const queueReferrals = referrals.filter(referral => {
+    return referral.queue === queueName;
+  });
+
+  res.json({
+    queue: queueName,
+    count: queueReferrals.length,
+    referrals: queueReferrals
+  });
+});
 
 const PORT = 3000;
 
