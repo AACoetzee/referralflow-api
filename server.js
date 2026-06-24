@@ -2,6 +2,7 @@ const express = require("express");
 
 const app = express();
 const checkReferral = require("./referralChecker");
+const extractReferral = require("./extractReferral");
 
 app.use(express.json());
 
@@ -97,6 +98,26 @@ app.get("/queues/:queueName", (req, res) => {
     referrals: queueReferrals
   });
 });
+
+// extract raw text
+
+app.post("/referrals/extract", (req, res) => {
+  const rawText = req.body.rawText;
+
+  if (!rawText) {
+    return res.status(400).json({
+      error: "rawText is required"
+    });
+  }
+
+  const extractedData = extractReferral(rawText);
+
+  res.json({
+    rawText,
+    extractedData
+  });
+});
+
 
 const PORT = 3000;
 
