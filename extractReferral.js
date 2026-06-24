@@ -1,11 +1,29 @@
 function extractReferral(rawText) {
   const text = rawText.toLowerCase();
 
+  let patientName = null;
+  let dob = null;
   let insurance = null;
   let serviceRequested = null;
   let diagnosisCode = null;
   const documents = [];
 
+  // Extract patient name
+  const nameMatch = rawText.match(/patient\s+([A-Z][a-z]+)\s+([A-Z][a-z]+)/);
+
+  if (nameMatch) {
+    patientName = `${nameMatch[1]} ${nameMatch[2]}`;
+  }
+
+  // Extract DOB in MM/DD/YYYY format
+  const dobMatch = rawText.match(/\b\d{2}\/\d{2}\/\d{4}\b/);
+
+  if (dobMatch) {
+    const parts = dobMatch[0].split("/");
+    dob = `${parts[2]}-${parts[0]}-${parts[1]}`;
+  }
+
+  // Extract insurance
   if (text.includes("aetna")) {
     insurance = "Aetna";
   }
@@ -18,6 +36,7 @@ function extractReferral(rawText) {
     insurance = "UnitedHealthcare";
   }
 
+  // Extract service requested
   if (text.includes("sleep study")) {
     serviceRequested = "sleep_study";
   }
@@ -30,6 +49,7 @@ function extractReferral(rawText) {
     serviceRequested = "imaging";
   }
 
+  // Extract documents
   if (text.includes("referral form")) {
     documents.push("referral_form");
   }
@@ -46,6 +66,7 @@ function extractReferral(rawText) {
     documents.push("imaging_order");
   }
 
+  // Extract diagnosis code like G47.33
   const diagnosisMatch = rawText.match(/[A-Z][0-9]{2}\.[0-9]{2}/);
 
   if (diagnosisMatch) {
@@ -53,6 +74,8 @@ function extractReferral(rawText) {
   }
 
   return {
+    patientName,
+    dob,
     insurance,
     serviceRequested,
     diagnosisCode,

@@ -118,6 +118,41 @@ app.post("/referrals/extract", (req, res) => {
   });
 });
 
+//intake
+app.post("/intake", (req, res) => {
+  const rawText = req.body.rawText;
+
+  if (!rawText) {
+    return res.status(400).json({
+      error: "rawText is required"
+    });
+  }
+
+  const extractedData = extractReferral(rawText);
+
+  const referral = {
+    id: `ref_${referrals.length + 1}`,
+    patientName: extractedData.patientName,
+    dob: extractedData.dob,
+    insurance: extractedData.insurance,
+    serviceRequested: extractedData.serviceRequested,
+    diagnosisCode: extractedData.diagnosisCode,
+    documents: extractedData.documents,
+    source: "raw_text_intake"
+  };
+
+  const checkResult = checkReferral(referral);
+
+  referral.status = checkResult.status;
+  referral.missingDocuments = checkResult.missingDocuments;
+  referral.priorAuthRequired = checkResult.priorAuthRequired;
+  referral.queue = checkResult.queue;
+  referral.message = checkResult.message;
+
+  referrals.push(referral);
+
+  res.status(201).json(referral);
+});
 
 const PORT = 3000;
 
