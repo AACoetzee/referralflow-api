@@ -1,8 +1,8 @@
 const express = require("express");
-
-const app = express();
 const checkReferral = require("./referralChecker");
 const extractReferral = require("./extractReferral");
+
+const app = express();
 
 app.use(express.json());
 
@@ -129,6 +129,37 @@ app.post("/intake", (req, res) => {
   }
 
   const extractedData = extractReferral(rawText);
+
+  //if there's missing fields
+  const missingFields = [];
+
+if (!extractedData.patientName) {
+  missingFields.push("patientName");
+}
+
+if (!extractedData.dob) {
+  missingFields.push("dob");
+}
+
+if (!extractedData.insurance) {
+  missingFields.push("insurance");
+}
+
+if (!extractedData.serviceRequested) {
+  missingFields.push("serviceRequested");
+}
+
+if (!extractedData.diagnosisCode) {
+  missingFields.push("diagnosisCode");
+}
+
+if (missingFields.length > 0) {
+  return res.status(400).json({
+    error: "Could not extract all required referral fields",
+    missingFields,
+    extractedData
+  });
+}
 
   const referral = {
     id: `ref_${referrals.length + 1}`,
