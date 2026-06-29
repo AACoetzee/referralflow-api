@@ -9,7 +9,7 @@ function extractReferral(rawText) {
   const documents = [];
 
   // Extract patient name
-  const nameMatch = rawText.match(/patient\s+([A-Z][a-z]+)\s+([A-Z][a-z]+)/);
+const nameMatch = rawText.match(/patient\s+([A-Z][a-z]+)\s+([A-Z][a-z]+)/i);
 
   if (nameMatch) {
     patientName = `${nameMatch[1]} ${nameMatch[2]}`;
